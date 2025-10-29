@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:12.3
+    restart: always
+    container_name: babayka-postgres
+    environment:
+      POSTGRES_DB: babaykakeeper
+      POSTGRES_USER: babayka_user
+      POSTGRES_PASSWORD: babayka_password
+    ports:
+      - "54321:5432"
+    volumes:
+      - babayka_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  babayka_postgres_data:

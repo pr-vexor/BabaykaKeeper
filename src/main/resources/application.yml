@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:54321/babaykakeeper
+    username: babayka_user
+    password: babayka_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+telegram:
+  bot:
+    token: ${BOT_TOKEN}
+    name: ${BOT_NAME}
+
+app:
+  instance:
+    id: ${INSTANCE_ID:home-pc}
+  friends:
+    group-id: ${FRIENDS_GROUP_ID}
+
+logging:
+  level:
+    pr.unikitty.telegrambot.babaykakeeper: DEBUG
+    org.hibernate.SQL: DEBUG
