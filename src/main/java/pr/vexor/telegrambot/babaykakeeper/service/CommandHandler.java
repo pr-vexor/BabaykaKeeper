@@ -44,6 +44,10 @@ public class CommandHandler {
         }
     }
 
+    public void handleButIgnoreCommand(Long chatId) {
+        messageSender.sendMessage(chatId, TextFields.COMMAND_HANDLE_IGNORE);
+    }
+
     private void handleStart(Long chatId) {
         messageSender.sendMessage(chatId, TextFields.START_COMMAND_TEXT);
         log.info("Start command");

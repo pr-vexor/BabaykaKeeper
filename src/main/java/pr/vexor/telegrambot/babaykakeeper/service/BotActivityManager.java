@@ -17,7 +17,7 @@ public class BotActivityManager {
     
     private volatile boolean isActive = false;
 
-    private static final String ACTIVITY_FLAG_FILENAME = "babayka_bot_active.flag";
+    private static final String ACTIVITY_FLAG_FILENAME = "C:\\Windows\\Temp\\babayka_bot_active.flag";
     
     @PostConstruct
     public void init() {

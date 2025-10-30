@@ -38,7 +38,10 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
         log.info("Update was found, updateId: {}", update.getUpdateId());
 
         // Проверяем активность бота (кроме команды activate)
-        if (!activityManager.isActive() && !isActivateCommand(update)) {
+        if (!activityManager.isActive() && !isActivateOrStartCommand(update)) {
+            if (update.hasMessage() && update.getMessage().hasText()) {
+                commandHandler.handleButIgnoreCommand(update.getMessage().getChatId());
+            }
             log.info("Bot is in standby mode, ignoring update");
             return;
         }
@@ -67,10 +70,11 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
         return botToken;
     }
     
-    private boolean isActivateCommand(Update update) {
+    private boolean isActivateOrStartCommand(Update update) {
         return update.hasMessage() && 
                update.getMessage().hasText() && 
-               update.getMessage().getText().equals("/activate");
+               (update.getMessage().getText().equals("/activate") ||
+                update.getMessage().getText().equals("/start"));
     }
 
 }
