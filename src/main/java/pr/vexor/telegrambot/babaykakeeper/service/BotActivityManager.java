@@ -12,8 +12,8 @@ import java.io.File;
 @Service
 public class BotActivityManager {
         
-    @Value("${app.instance.id}")
-    private String instanceId;
+    @Value("${app.instance.name}")
+    private String instanceName;
     
     private volatile boolean isActive = false;
 
@@ -72,11 +72,11 @@ public class BotActivityManager {
         return isActive;
     }
     
-    public String getInstanceId() {
-        return instanceId;
+    public String getInstanceName() {
+        return instanceName;
     }
     
     private void logStatus() {
-        log.info("Bot instance `{}` is {}", instanceId, isActive ? "ACTIVE" : "STANDBY");
+        log.info("Bot instance `{}` is {}", instanceName, isActive ? "ACTIVE" : "STANDBY");
     }
 }

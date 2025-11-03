@@ -1,16 +1,13 @@
 package pr.vexor.telegrambot.babaykakeeper.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "posts")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class Post {
     
@@ -38,5 +35,4 @@ public class Post {
         this.hasButtons = true;
         this.privateGroupMessageId = friendsGroupMessageId;
     }
-    
 }

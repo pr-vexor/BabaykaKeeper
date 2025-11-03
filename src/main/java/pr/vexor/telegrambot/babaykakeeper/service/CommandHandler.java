@@ -86,7 +86,7 @@ public class CommandHandler {
         String status = activityManager.isActive() ? TextFields.ACTIVE_STATUS : TextFields.STANDBY_STATUS;
         String messageText = String.format(TextFields.STATUS_COMMAND_TEXT, 
                 status, 
-                activityManager.getInstanceId());
+                activityManager.getInstanceName());
         messageSender.sendMessage(chatId, messageText);
     }
 

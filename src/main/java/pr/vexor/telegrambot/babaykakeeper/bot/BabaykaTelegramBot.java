@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 
 import pr.vexor.telegrambot.babaykakeeper.service.BotActivityManager;
 import pr.vexor.telegrambot.babaykakeeper.service.ChannelService;
@@ -22,6 +24,9 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     @Value("${telegram.bot.name}") 
     private String botName;
 
+    @Value("${telegram.owner-id}")
+    private Long ownerId;
+        
     @Lazy
     @Autowired
     private CommandHandler commandHandler;
@@ -37,7 +42,6 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         log.info("Update was found, updateId: {}", update.getUpdateId());
 
-        // Проверяем активность бота (кроме команды activate)
         if (!activityManager.isActive() && !isActivateOrStartCommand(update)) {
             if (update.hasMessage() && update.getMessage().hasText()) {
                 commandHandler.handleButIgnoreCommand(update.getMessage().getChatId());
@@ -47,16 +51,28 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
         }
 
         try {
-            // сообщение
-            if (update.hasMessage() && update.getMessage().hasText()) {
-                commandHandler.handleCommand(update.getMessage());
-            }
-            // пост
-            if (update.hasChannelPost()) {
-                channelService.processChannelPost(update.getChannelPost());
+            if (update.hasMessage()) {
+                Message message = update.getMessage();
+
+                if (isPrivateChat(message)) {
+                    if (isAdmin(message.getFrom())) {
+                        if (message.hasText() && message.getText().startsWith("/")) {
+                            commandHandler.handleCommand(message);
+                        } else {
+                            // Это пост для публикации в канале
+                            channelService.publishPostViaBot(message);
+                        }
+                    } else {
+                        // Не админ — обрабатываем только команды
+                        if (message.hasText() && message.getText().startsWith("/")) {
+                            commandHandler.handleCommand(message);
+                        }
+                        // Иначе — игнорируем
+                    }
+                }
             }
         } catch (Exception e) {
-            log.error("Error processing update: {}", e.getMessage());
+            log.error("Error processing update: {}", e.getMessage(), e);
         }
     }
     
@@ -76,5 +92,12 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
                (update.getMessage().getText().equals("/activate") ||
                 update.getMessage().getText().equals("/start"));
     }
-
+    
+    private boolean isPrivateChat(Message message) {
+        return "private".equals(message.getChat().getType());
+    }
+    
+    private boolean isAdmin(User user) {
+        return user.getId().equals(ownerId);
+    }
 }
