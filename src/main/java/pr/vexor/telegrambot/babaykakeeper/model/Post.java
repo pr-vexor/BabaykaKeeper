@@ -17,22 +17,22 @@ public class Post {
     @Column(nullable = false)
     private Long channelChatId;
     
-    private String processedByInstance;
+    private String processedBy;
     
     @Column(nullable = false)
     private LocalDateTime processedAt;
     
     @Column(nullable = false)
-    private boolean hasButtons = false;
+    private boolean hasButton = false;
     
-    private Integer privateGroupMessageId;
+    private Long privateGroupMessageId;
     
-    public Post(Integer messageId, Long channelChatId, String instanceId, Integer friendsGroupMessageId) {
+    public Post(Integer messageId, Long channelChatId, String instanceName, Long friendsGroupMessageId) {
         this.messageId = messageId;
         this.channelChatId = channelChatId;
-        this.processedByInstance = instanceId;
+        this.processedBy = instanceName;
         this.processedAt = LocalDateTime.now();
-        this.hasButtons = true;
+        this.hasButton = true;
         this.privateGroupMessageId = friendsGroupMessageId;
     }
 }

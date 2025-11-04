@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import pr.vexor.telegrambot.babaykakeeper.model.Post;
 import pr.vexor.telegrambot.babaykakeeper.repository.ProcessedPostRepository;
 
 @Slf4j
@@ -17,6 +18,9 @@ public class ChannelService {
 
     @Value("${telegram.friends-group-id:NOT_SET_YET}")
     private String friendsGroupId;
+    
+    @Value("${app.instance.name}")
+    private String instanceName;
 
     @Autowired
     private MessageSenderService messageSender;
@@ -38,19 +42,18 @@ public class ChannelService {
         Integer tempId = originalMessage.getMessageId();
 
         try {
-            //Копируем пост в закрытую группу друзей
+            // Копируем пост в закрытую группу друзей
             Long friendsMessageId = messageSender.copyMessageToFriendsGroup(friendsGroupId, originalMessage);
             log.info("Post copied to friends group, friendsMessageId: {}", friendsMessageId);
 
             // Публикуем в канал с добавленной ссылкой
             String discussionLink = messageSender.createMessageLink(friendsGroupId, friendsMessageId);
-            messageSender.sendPostToChannel(channelId, originalMessage, discussionLink);
+            Integer channelMessageId = messageSender.sendPostToChannel(channelId, originalMessage, discussionLink);
 
-            // todo: Сохраняем в БД — если нужно отслеживать
-            // Пока пропускаем, так как не знаем ID в канале без доработки sendPostToChannel
-            // Можно вернуть MessageId из sendPostToChannel и сохранить
+            Post post = new Post(channelMessageId, Long.valueOf(channelId), instanceName, friendsMessageId);
+            postRepository.save(post);
 
-            log.info("Post successfully published to channel via bot");
+            log.info("Post successfully published to channel via bot and saved to DB");
 
         } catch (Exception e) {
             log.error("Error publishing post via bot (tempId: {}): {}", tempId, e.getMessage(), e);
