@@ -19,25 +19,18 @@ public class TextFields {
                                     " - ID: %s\n" +
                                     " - Тип: %s\n" +
                                     " - Название: %s";  
-
-    
-    public static final String ACTIVATION_COMMAND_TEXT = "Активация бота...\n" + 
-                                    "Бот активирован и будет теперь обрабатывать посты из канала";
         
     public static final String UNKNOWN_COMMAND_TEXT = "Неизвестная команда\n" +
                                     "Используй /start для списка команд";
-    
-    public static final String CHECK_POSTS_TEXT = "Проверка постов... (функционал в разработке)";
-    
+        
     public static final String STANDBYING_SUCCESS = "Бот переведен в режим ожидания";
     public static final String STANDBYING_ERORR = "Не удалось перевести бота в режим ожидания";
     public static final String ACTIVATION_SUCCESS = "Бот активирован и будет теперь обрабатывать посты из канала";
     public static final String ACTIVATION_ERORR = "Не удалось активировать бота";
     public static final String COMMAND_HANDLE_IGNORE = "Бот не активен, команда не обработана";
 
-    
     public static final String ACTIVE_STATUS = "АКТИВНЫЙ";
     public static final String STANDBY_STATUS = "В ОЖИДАНИИ";
     public static final String MESSAGES_TYPE = "Личные сообщения";
-    public static final String BUTTON_TEXT = "Обсудить с друзьями";
+    public static final String BUTTON_LINK_HTML_FORMAT = "\n\n💭 <a href=\"%s\">Обсудить с друзьями</a>";
 }

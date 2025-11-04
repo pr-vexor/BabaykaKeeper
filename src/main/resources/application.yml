@@ -10,13 +10,14 @@ spring:
 
 logging:
   level:
-    pr.unikitty.telegrambot.babaykakeeper: DEBUG
+    pr.vexor.telegrambot.babaykakeeper: DEBUG
     org.hibernate.SQL: DEBUG
     
 app:
   instance:
     name: ${INSTANCE_NAME:home-pc}
-    
+    activity-flag-filename: ${ACTIVITY_FLAG_FILENAME:"C:\\Windows\\Temp\\babayka_bot_active.flag"}
+
 telegram:
   bot:
     token: ${BOT_TOKEN}

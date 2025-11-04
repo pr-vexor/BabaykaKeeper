@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
+import pr.vexor.telegrambot.babaykakeeper.utils.TextFields;
 
 @Slf4j
 @Service
@@ -45,7 +46,7 @@ public class MessageSenderService {
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public void sendPostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
-        String linkHtml = "\n\n👥 <a href=\"" + discussionLink + "\">Обсудить с друзьями</a>";
+        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink);
 
         if (original.hasText()) {
             String fullText = original.getText() + linkHtml;
@@ -54,10 +55,9 @@ public class MessageSenderService {
             message.setText(fullText);
             message.setParseMode("HTML");
             bot.execute(message);
-
         } else if (original.hasPhoto()) {
             var photos = original.getPhoto();
-            String fileId = photos.get(photos.size() - 1).getFileId(); // лучшее качество
+            String fileId = photos.get(photos.size() - 1).getFileId();
             String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
 
             SendPhoto sendPhoto = new SendPhoto();
@@ -66,7 +66,6 @@ public class MessageSenderService {
             sendPhoto.setCaption(caption);
             sendPhoto.setParseMode("HTML");
             bot.execute(sendPhoto);
-
         } else if (original.hasVideo()) {
             String fileId = original.getVideo().getFileId();
             String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
@@ -77,7 +76,6 @@ public class MessageSenderService {
             sendVideo.setCaption(caption);
             sendVideo.setParseMode("HTML");
             bot.execute(sendVideo);
-
         } else if (original.getDocument() != null) {
             String fileId = original.getDocument().getFileId();
             String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
@@ -88,7 +86,6 @@ public class MessageSenderService {
             sendDoc.setCaption(caption);
             sendDoc.setParseMode("HTML");
             bot.execute(sendDoc);
-
         } else {
             // fallback: текстовое уведомление
             SendMessage msg = new SendMessage();

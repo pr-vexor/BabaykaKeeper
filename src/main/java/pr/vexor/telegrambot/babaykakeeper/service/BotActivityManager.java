@@ -15,9 +15,10 @@ public class BotActivityManager {
     @Value("${app.instance.name}")
     private String instanceName;
     
+    @Value("${app.instance.activity-flag-filename}")
+    private String activityFlagFilename;
+    
     private volatile boolean isActive = false;
-
-    private static final String ACTIVITY_FLAG_FILENAME = "C:\\Windows\\Temp\\babayka_bot_active.flag";
     
     @PostConstruct
     public void init() {
@@ -30,8 +31,8 @@ public class BotActivityManager {
      */
     @Scheduled(fixedRate = 5*60*1000)
     public void checkActivityStatus() {
-        File activeFlag = new File(ACTIVITY_FLAG_FILENAME);
-        this.isActive = activeFlag.exists();
+        File activeFlag = new File(activityFlagFilename);
+        isActive = activeFlag.exists();
     }
     
     /**
@@ -40,7 +41,7 @@ public class BotActivityManager {
      */
     public boolean activate() {
         try {
-            File activeFlag = new File(ACTIVITY_FLAG_FILENAME);
+            File activeFlag = new File(activityFlagFilename);
             if (activeFlag.createNewFile()) {
                 isActive = true;
                 
@@ -58,7 +59,7 @@ public class BotActivityManager {
      * @return true в случае успеха
      */
     public boolean deactivate() {
-        File activeFlag = new File(ACTIVITY_FLAG_FILENAME);
+        File activeFlag = new File(activityFlagFilename);
         if (activeFlag.delete()) {
             isActive = false;
             

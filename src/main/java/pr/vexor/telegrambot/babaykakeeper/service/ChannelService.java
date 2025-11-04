@@ -32,10 +32,10 @@ public class ChannelService {
     }
 
     /**
-     * Публикация поста в канал через бота (админ прислал пост в ЛС)
+     * Публикация поста в канал через бота (админ присылает пост в ЛС)
      */
     public void publishPostViaBot(Message originalMessage) {
-        Integer tempId = originalMessage.getMessageId(); // для логов
+        Integer tempId = originalMessage.getMessageId();
 
         try {
             //Копируем пост в закрытую группу друзей
@@ -54,8 +54,6 @@ public class ChannelService {
 
         } catch (Exception e) {
             log.error("Error publishing post via bot (tempId: {}): {}", tempId, e.getMessage(), e);
-            // Можно отправить админу уведомление об ошибке
         }
     }
-
 }
