@@ -65,7 +65,9 @@ public class CommandHandler {
     }
 
     private void handleActivate(Long chatId, String userName) {
-        if (activityManager.activate()) {
+        if (activityManager.isActive()) {
+            messageSender.sendMessage(chatId, TextFields.ALREADY_ACTIVE);
+        } else if (activityManager.activate()) {
             messageSender.sendMessage(chatId, TextFields.ACTIVATION_SUCCESS);
             log.info("Bot was activated by user @{}", userName);
         } else {

@@ -16,7 +16,7 @@ logging:
 app:
   instance:
     name: ${INSTANCE_NAME:home-pc}
-    activity-flag-filename: ${ACTIVITY_FLAG_FILENAME:"C:\\Windows\\Temp\\babayka_bot_active.flag"}
+    activity-flag-filename: ${ACTIVITY_FLAG_FILENAME:C:\\\\Windows\\Temp\\babayka_bot_active.flag}
 
 telegram:
   bot:

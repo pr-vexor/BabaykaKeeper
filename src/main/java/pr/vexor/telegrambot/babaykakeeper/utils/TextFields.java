@@ -23,14 +23,17 @@ public class TextFields {
     public static final String UNKNOWN_COMMAND_TEXT = "Неизвестная команда\n" +
                                     "Используй /start для списка команд";
         
-    public static final String STANDBYING_SUCCESS = "Бот переведен в режим ожидания";
+    public static final String STANDBYING_SUCCESS = "Бот переведён в режим ожидания";
     public static final String STANDBYING_ERORR = "Не удалось перевести бота в режим ожидания";
     public static final String ACTIVATION_SUCCESS = "Бот активирован и будет теперь обрабатывать посты из канала";
     public static final String ACTIVATION_ERORR = "Не удалось активировать бота";
     public static final String COMMAND_HANDLE_IGNORE = "Бот не активен, команда не обработана";
-
+    public static final String ALREADY_ACTIVE = " Бот уже активен";
+    public static final String ALREADY_STANDBY = " Бот уже переведён в режим ожидания";
+    
     public static final String ACTIVE_STATUS = "АКТИВНЫЙ";
     public static final String STANDBY_STATUS = "В ОЖИДАНИИ";
     public static final String MESSAGES_TYPE = "Личные сообщения";
+    
     public static final String BUTTON_LINK_HTML_FORMAT = "\n\n💭 <a href=\"%s\">Обсудить с друзьями</a>";
 }
