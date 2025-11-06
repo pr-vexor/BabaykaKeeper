@@ -35,5 +35,5 @@ public class TextFields {
     public static final String STANDBY_STATUS = "В ОЖИДАНИИ";
     public static final String MESSAGES_TYPE = "Личные сообщения";
     
-    public static final String BUTTON_LINK_HTML_FORMAT = "\n\n💭 <a href=\"%s\">Обсудить с друзьями</a>";
+    public static final String BUTTON_LINK_HTML_FORMAT = "\n\n<a href=\"%s\">%s</a>";
 }
