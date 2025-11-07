@@ -1,25 +1,24 @@
 package pr.vexor.telegrambot.babaykakeeper.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
+
+import pr.vexor.telegrambot.babaykakeeper.config.ApplicationProperties;
 
 import java.io.File;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class BotActivityManager {
-        
-    @Value("${app.instance.name}")
-    private String instanceName;
-    
-    @Value("${app.instance.activity-flag-filename}")
-    private String activityFlagFilename;
     
     private volatile boolean isActive = false;
     
+    private final ApplicationProperties applicationProperties;
+
     @PostConstruct
     public void init() {
         checkActivityStatus();
@@ -31,7 +30,7 @@ public class BotActivityManager {
      */
     @Scheduled(fixedRate = 5*60*1000)
     public void checkActivityStatus() {
-        File activeFlag = new File(activityFlagFilename);
+        File activeFlag = new File(applicationProperties.getActivityFlagFilename());
         isActive = activeFlag.exists();
     }
     
@@ -41,7 +40,7 @@ public class BotActivityManager {
      */
     public boolean activate() {
         try {
-            File activeFlag = new File(activityFlagFilename);
+            File activeFlag = new File(applicationProperties.getActivityFlagFilename());
             if (activeFlag.createNewFile()) {
                 isActive = true;
                 
@@ -59,7 +58,7 @@ public class BotActivityManager {
      * @return true в случае успеха
      */
     public boolean deactivate() {
-        File activeFlag = new File(activityFlagFilename);
+        File activeFlag = new File(applicationProperties.getActivityFlagFilename());
         if (activeFlag.delete()) {
             isActive = false;
             
@@ -74,10 +73,11 @@ public class BotActivityManager {
     }
     
     public String getInstanceName() {
-        return instanceName;
+        return applicationProperties.getName();
     }
     
     private void logStatus() {
-        log.info("Bot instance `{}` is {}", instanceName, isActive ? "ACTIVE" : "STANDBY");
+        log.info("Bot instance `{}` is {}", 
+                applicationProperties.getName(), isActive ? "ACTIVE" : "STANDBY");
     }
 }

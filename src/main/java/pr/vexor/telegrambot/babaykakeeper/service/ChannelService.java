@@ -1,25 +1,25 @@
 package pr.vexor.telegrambot.babaykakeeper.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import pr.vexor.telegrambot.babaykakeeper.config.ApplicationProperties;
 import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.model.Post;
 import pr.vexor.telegrambot.babaykakeeper.repository.ProcessedPostRepository;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class ChannelService {
 
-    @Value("${app.instance.name}")
-    private String instanceName;
-
-    private MessageSenderService messageSender;
-    private ProcessedPostRepository postRepository;
-    private TelegramProperties telegramProperties;
-
+    private final MessageSenderService messageSender;
+    private final ProcessedPostRepository postRepository;
+    private final TelegramProperties telegramProperties;
+    private final ApplicationProperties applicationProperties;
+    
     /**
      * Проверка существования поста в БД
      */
@@ -44,7 +44,7 @@ public class ChannelService {
             String discussionLink = messageSender.createMessageLink(privateGroupId, privateMessageId);
             Integer channelMessageId = messageSender.sendPostToChannel(channelId, originalMessage, discussionLink);
 
-            Post post = new Post(channelMessageId, Long.valueOf(channelId), instanceName, privateMessageId);
+            Post post = new Post(channelMessageId, Long.valueOf(channelId), applicationProperties.getName(), privateMessageId);
             postRepository.save(post);
 
             log.info("Post successfully published to channel via bot and saved to DB");

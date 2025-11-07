@@ -47,59 +47,59 @@ public class MessageSenderService {
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public Integer sendPostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
-    String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
+        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
 
-    if (original.hasText()) {
-        String fullText = original.getText() + linkHtml;
-        SendMessage message = new SendMessage();
-        message.setChatId(channelId);
-        message.setText(fullText);
-        message.setParseMode("HTML");
-        Message sentMessage = bot.execute(message);
-        return sentMessage.getMessageId();
-    } else if (original.hasPhoto()) {
-        var photos = original.getPhoto();
-        String fileId = photos.get(photos.size() - 1).getFileId();
-        String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
+        if (original.hasText()) {
+            String fullText = original.getText() + linkHtml;
+            SendMessage message = new SendMessage();
+            message.setChatId(channelId);
+            message.setText(fullText);
+            message.setParseMode("HTML");
+            Message sentMessage = bot.execute(message);
+            return sentMessage.getMessageId();
+        } else if (original.hasPhoto()) {
+            var photos = original.getPhoto();
+            String fileId = photos.get(photos.size() - 1).getFileId();
+            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
 
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(channelId);
-        sendPhoto.setPhoto(new InputFile(fileId));
-        sendPhoto.setCaption(caption);
-        sendPhoto.setParseMode("HTML");
-        Message sentMessage = bot.execute(sendPhoto);
-        return sentMessage.getMessageId();
-    } else if (original.hasVideo()) {
-        String fileId = original.getVideo().getFileId();
-        String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(channelId);
+            sendPhoto.setPhoto(new InputFile(fileId));
+            sendPhoto.setCaption(caption);
+            sendPhoto.setParseMode("HTML");
+            Message sentMessage = bot.execute(sendPhoto);
+            return sentMessage.getMessageId();
+        } else if (original.hasVideo()) {
+            String fileId = original.getVideo().getFileId();
+            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
 
-        SendVideo sendVideo = new SendVideo();
-        sendVideo.setChatId(channelId);
-        sendVideo.setVideo(new InputFile(fileId));
-        sendVideo.setCaption(caption);
-        sendVideo.setParseMode("HTML");
-        Message sentMessage = bot.execute(sendVideo);
-        return sentMessage.getMessageId();
-    } else if (original.getDocument() != null) {
-        String fileId = original.getDocument().getFileId();
-        String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
+            SendVideo sendVideo = new SendVideo();
+            sendVideo.setChatId(channelId);
+            sendVideo.setVideo(new InputFile(fileId));
+            sendVideo.setCaption(caption);
+            sendVideo.setParseMode("HTML");
+            Message sentMessage = bot.execute(sendVideo);
+            return sentMessage.getMessageId();
+        } else if (original.getDocument() != null) {
+            String fileId = original.getDocument().getFileId();
+            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
 
-        SendDocument sendDoc = new SendDocument();
-        sendDoc.setChatId(channelId);
-        sendDoc.setDocument(new InputFile(fileId));
-        sendDoc.setCaption(caption);
-        sendDoc.setParseMode("HTML");
-        Message sentMessage = bot.execute(sendDoc);
-        return sentMessage.getMessageId();
-    } else {
-        SendMessage msg = new SendMessage();
-        msg.setChatId(channelId);
-        msg.setText("Новое сообщение\n\n" + linkHtml);
-        msg.setParseMode("HTML");
-        Message sentMessage = bot.execute(msg);
-        return sentMessage.getMessageId();
+            SendDocument sendDoc = new SendDocument();
+            sendDoc.setChatId(channelId);
+            sendDoc.setDocument(new InputFile(fileId));
+            sendDoc.setCaption(caption);
+            sendDoc.setParseMode("HTML");
+            Message sentMessage = bot.execute(sendDoc);
+            return sentMessage.getMessageId();
+        } else {
+            SendMessage msg = new SendMessage();
+            msg.setChatId(channelId);
+            msg.setText("Новое сообщение\n\n" + linkHtml);
+            msg.setParseMode("HTML");
+            Message sentMessage = bot.execute(msg);
+            return sentMessage.getMessageId();
+        }
     }
-}
 
     /**
      * Создание ссылки на сообщение в чате

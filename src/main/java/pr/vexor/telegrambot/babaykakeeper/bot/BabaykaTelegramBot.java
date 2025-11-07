@@ -92,6 +92,7 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     }
     
     private boolean isAdmin(User user) {
-        return user.getId().equals(telegramProperties.getOwnerId());
+        String userId = user.getId().toString();
+        return userId.equals(telegramProperties.getOwnerId());
     }
 }
