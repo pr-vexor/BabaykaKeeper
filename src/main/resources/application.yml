@@ -24,4 +24,6 @@ telegram:
     name: ${BOT_NAME}
   owner-id: ${OWNER_ID}
   channel-id: ${CHANNEL_ID}
-  friends-group-id: ${FRIENDS_GROUP_ID}
+  private-group:
+    id: ${PRIVATE_GROUP_ID}
+    text: '${PRIVATE_GROUP_TEXT:-💭 Обсудить с друзьями}'
