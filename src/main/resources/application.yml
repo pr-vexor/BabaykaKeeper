@@ -26,4 +26,4 @@ telegram:
   channel-id: ${CHANNEL_ID}
   private-group:
     id: ${PRIVATE_GROUP_ID}
-    text: ${PRIVATE_GROUP_TEXT:-ntrcn}
+    text: '${PRIVATE_GROUP_TEXT:-💭 Обсудить с друзьями}'

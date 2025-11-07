@@ -1,11 +1,11 @@
 package pr.vexor.telegrambot.babaykakeeper.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.model.Post;
 import pr.vexor.telegrambot.babaykakeeper.repository.ProcessedPostRepository;
 
@@ -13,20 +13,12 @@ import pr.vexor.telegrambot.babaykakeeper.repository.ProcessedPostRepository;
 @Service
 public class ChannelService {
 
-    @Value("${telegram.channel-id}")
-    private String channelId;
-
-    @Value("${telegram.private-group.id:NOT_SET_YET}")
-    private String privateGroupId;
-    
     @Value("${app.instance.name}")
     private String instanceName;
 
-    @Autowired
     private MessageSenderService messageSender;
-
-    @Autowired
     private ProcessedPostRepository postRepository;
+    private TelegramProperties telegramProperties;
 
     /**
      * Проверка существования поста в БД
@@ -40,17 +32,19 @@ public class ChannelService {
      */
     public void publishPostViaBot(Message originalMessage) {
         Integer tempId = originalMessage.getMessageId();
+        String channelId = telegramProperties.getChannelId();
+        String privateGroupId = telegramProperties.getPrivateGroup().getId();
 
         try {
             // Копируем пост в закрытую группу друзей
-            Long friendsMessageId = messageSender.copyMessageToFriendsGroup(privateGroupId, originalMessage);
-            log.info("Post copied to friends group, friendsMessageId: {}", friendsMessageId);
+            Long privateMessageId = messageSender.copyMessageToFriendsGroup(privateGroupId, originalMessage);
+            log.info("Post copied to private group, privateMessageId: {}", privateMessageId);
 
             // Публикуем в канал с добавленной ссылкой
-            String discussionLink = messageSender.createMessageLink(privateGroupId, friendsMessageId);
+            String discussionLink = messageSender.createMessageLink(privateGroupId, privateMessageId);
             Integer channelMessageId = messageSender.sendPostToChannel(channelId, originalMessage, discussionLink);
 
-            Post post = new Post(channelMessageId, Long.valueOf(channelId), instanceName, friendsMessageId);
+            Post post = new Post(channelMessageId, Long.valueOf(channelId), instanceName, privateMessageId);
             postRepository.save(post);
 
             log.info("Post successfully published to channel via bot and saved to DB");

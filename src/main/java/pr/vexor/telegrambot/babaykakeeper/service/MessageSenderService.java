@@ -2,7 +2,6 @@ package pr.vexor.telegrambot.babaykakeeper.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.CopyMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -15,19 +14,16 @@ import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
+import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.utils.TextFields;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class MessageSenderService {
-
-    @Value("${telegram.private-group.text:rtbrtb}")
-    private final String linkText;
-    
-    private static final String MESSAGE_LINK_FORMAT = "https://t.me/c/%s/%s";
-    
+        
     private final BabaykaTelegramBot bot;
+    private final TelegramProperties telegramProperties;
   
     /**
      * Копирование сообщения в закрытую группу друзей
@@ -51,7 +47,7 @@ public class MessageSenderService {
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public Integer sendPostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
-    String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, linkText, discussionLink);
+    String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
 
     if (original.hasText()) {
         String fullText = original.getText() + linkHtml;
@@ -110,9 +106,12 @@ public class MessageSenderService {
      */
     public String createMessageLink(String chatId, Long messageId) {
         String cleanChatId = chatId.startsWith("-100") ? chatId.substring(4) : chatId;
-        return String.format(MESSAGE_LINK_FORMAT, cleanChatId, messageId);
+        return String.format(TextFields.MESSAGE_LINK_FORMAT, cleanChatId, messageId);
     }
     
+    /**
+     * Отправка сообщения
+     */
     public void sendMessage(Long chatId, String text) {
         try {
             SendMessage message = new SendMessage();

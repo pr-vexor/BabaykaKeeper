@@ -1,7 +1,10 @@
 package pr.vexor.telegrambot.babaykakeeper.config;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -12,19 +15,32 @@ import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
 
 @Slf4j
 @Configuration
-public class BotConfig {
+@Data
+@ConfigurationProperties(prefix = "telegram")
+public class TelegramProperties {
 
-    @Value("${telegram.bot.token}")
-    private String botToken;
+    private Bot bot;
+    private String ownerId;
+    private String channelId;
+    private PrivateGroup privateGroup;
 
-    @Value("${telegram.bot.name}")
-    private String botName;
-
+    @Data
+    public static class Bot {
+        private String token;
+        private String name;
+    }
+    
+    @Data
+    public static class PrivateGroup {
+        private String id;
+        private String text;
+    }
+    
     @Bean
     public TelegramBotsApi telegramBotsApi(BabaykaTelegramBot bot) throws TelegramApiException {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(bot);
-        log.info("Bot {} was registered successfully", botName);
+        log.info("Bot {} was registered successfully", bot.getBotUsername());
         return botsApi;
     }
     

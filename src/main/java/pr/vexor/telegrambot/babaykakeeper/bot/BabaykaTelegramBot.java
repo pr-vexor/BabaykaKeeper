@@ -2,7 +2,6 @@ package pr.vexor.telegrambot.babaykakeeper.bot;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -10,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
+import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.service.BotActivityManager;
 import pr.vexor.telegrambot.babaykakeeper.service.ChannelService;
 import pr.vexor.telegrambot.babaykakeeper.service.CommandHandler;
@@ -17,15 +17,6 @@ import pr.vexor.telegrambot.babaykakeeper.service.CommandHandler;
 @Slf4j
 @Service
 public class BabaykaTelegramBot extends TelegramLongPollingBot {
-
-    @Value("${telegram.bot.token}")
-    private String botToken;
-    
-    @Value("${telegram.bot.name}") 
-    private String botName;
-
-    @Value("${telegram.owner-id}")
-    private Long ownerId;
         
     @Lazy
     @Autowired
@@ -37,6 +28,9 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     
     @Autowired
     private BotActivityManager activityManager;
+    
+    @Autowired
+    private TelegramProperties telegramProperties;
     
     @Override
     public void onUpdateReceived(Update update) {
@@ -78,12 +72,12 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     
     @Override
     public String getBotUsername() {
-        return botName;
+        return telegramProperties.getBot().getName();
     }
 
     @Override
     public String getBotToken() {
-        return botToken;
+        return telegramProperties.getBot().getToken();
     }
     
     private boolean isActivateOrStartCommand(Update update) {
@@ -98,6 +92,6 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     }
     
     private boolean isAdmin(User user) {
-        return user.getId().equals(ownerId);
+        return user.getId().equals(telegramProperties.getOwnerId());
     }
 }
