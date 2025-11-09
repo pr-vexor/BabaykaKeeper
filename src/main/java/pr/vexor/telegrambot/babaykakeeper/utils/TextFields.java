@@ -30,7 +30,8 @@ public class TextFields {
     public static final String COMMAND_HANDLE_IGNORE = "Бот не активен, команда не обработана";
     public static final String ALREADY_ACTIVE = " Бот уже активен";
     public static final String ALREADY_STANDBY = " Бот уже переведён в режим ожидания";
-    
+    public static final String COMMAND_HANDLE_NON_ADMIN_IGNORE = "Бот обрабатывает только команды админа";
+
     public static final String ACTIVE_STATUS = "АКТИВНЫЙ";
     public static final String STANDBY_STATUS = "В ОЖИДАНИИ";
     public static final String MESSAGES_TYPE = "Личные сообщения";

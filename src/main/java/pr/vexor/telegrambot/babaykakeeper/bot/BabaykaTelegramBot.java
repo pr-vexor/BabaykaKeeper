@@ -1,10 +1,12 @@
 package pr.vexor.telegrambot.babaykakeeper.bot;
 
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -47,21 +49,26 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
         try {
             if (update.hasMessage()) {
                 Message message = update.getMessage();
+                Long chatId = message.getChatId();
 
-                if (isPrivateChat(message)) {
-                    if (isAdmin(message.getFrom())) {
-                        if (message.hasText() && message.getText().startsWith("/")) {
-                            commandHandler.handleCommand(message);
-                        } else {
-                            // Это пост для публикации в канале
+                // Обработка команд
+                if (message.hasText() && message.getText().startsWith("/")) {
+                    if (isAdmin(message)) {
+                        commandHandler.handleCommand(message);
+                    } else {
+                        commandHandler.handleButIgnoreNonAdminCommand(update.getMessage().getChatId());
+                        log.info("Non-admin user tried to send a command, chatId: {}", chatId);
+                    }
+                // Публикация постов (возможна только из приватного чата)
+                } else {
+                    if (isPrivateChat(message)) {
+                        if (isAdmin(message)) {
                             channelService.publishPostViaBot(message);
+                        } else {
+                            log.info("Non-admin user tried to publish a post, chatId: {}", chatId);
                         }
                     } else {
-                        // Не админ — обрабатываем только команды
-                        if (message.hasText() && message.getText().startsWith("/")) {
-                            commandHandler.handleCommand(message);
-                        }
-                        // Иначе — игнорируем
+                        log.info("Post publication attempt from non-private chat, chatId: {}", chatId);
                     }
                 }
             }
@@ -91,8 +98,23 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
         return "private".equals(message.getChat().getType());
     }
     
-    private boolean isAdmin(User user) {
-        String userId = user.getId().toString();
-        return userId.equals(telegramProperties.getOwnerId());
+    private boolean isAdmin(Message message) {
+        User user = message.getFrom();
+        Chat senderChat = message.getSenderChat();
+
+        // От имени группы (GroupAnonymousBot)
+        if (senderChat != null && "supergroup".equals(senderChat.getType())) {
+            String senderChatId = senderChat.getId().toString();
+            String propertiesChatId = telegramProperties.getPrivateGroup().getId();
+            return Objects.equals(senderChatId, propertiesChatId);
+        }
+
+        // Обычный пользователь
+        if (user != null) {
+            Long ownerId = Long.valueOf(telegramProperties.getOwnerId());
+            return user.getId().equals(ownerId);
+        }
+
+        return false;
     }
 }
