@@ -1,8 +1,6 @@
 package pr.vexor.telegrambot.babaykakeeper.config;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +18,7 @@ import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
 public class TelegramProperties {
 
     private Bot bot;
+    private int albumTimeoutSeconds;
     private String ownerId;
     private String channelId;
     private PrivateGroup privateGroup;

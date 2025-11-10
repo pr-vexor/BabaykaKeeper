@@ -48,6 +48,24 @@ public class MessageSenderService {
     }
 
     /**
+     * Копирование одиночного сообщения в закрытую группу друзей
+     */
+    public Long copySingleMessageToFriendsGroup(String friendsGroupId, Message originalPost) throws TelegramApiException {
+        CopyMessage copyMessage = new CopyMessage();
+        copyMessage.setChatId(friendsGroupId);
+        copyMessage.setFromChatId(originalPost.getChatId().toString());
+        copyMessage.setMessageId(originalPost.getMessageId());
+
+        if (originalPost.getCaption() != null) {
+            copyMessage.setCaption(originalPost.getCaption());
+        }
+
+        MessageId messageId = bot.execute(copyMessage);
+        log.info("Single message copied to friends group: {}", messageId.getMessageId());
+        return messageId.getMessageId();
+    }
+
+    /**
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public Integer sendPostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
@@ -122,6 +140,25 @@ public class MessageSenderService {
         // Отправляем альбом
         return bot.execute(sendMediaGroup);
     }
+    
+    /**
+    * Отправка альбома в закрытую группу
+    */
+   public List<Message> sendAlbumToPrivateGroup(String privateGroupId, List<InputMedia> mediaList) throws TelegramApiException {
+       // Добавляем ссылку на закрытую группу к первому фото
+       if (!mediaList.isEmpty()) {
+           String discussionLink = createMessageLink(privateGroupId, /* messageId будет заменено позже */ -1L);
+           mediaList.get(0).setCaption(discussionLink);
+           mediaList.get(0).setParseMode("HTML");
+       }
+
+       SendMediaGroup sendMediaGroup = new SendMediaGroup();
+       sendMediaGroup.setChatId(privateGroupId);
+       sendMediaGroup.setMedias(mediaList);
+
+       // Отправляем альбом
+       return bot.execute(sendMediaGroup);
+   }
     
     /**
      * Создание ссылки на сообщение в чате
