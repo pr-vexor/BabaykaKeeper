@@ -1,6 +1,5 @@
 package pr.vexor.telegrambot.babaykakeeper.bot;
 
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +14,8 @@ import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.service.BotActivityManager;
 import pr.vexor.telegrambot.babaykakeeper.service.ChannelService;
 import pr.vexor.telegrambot.babaykakeeper.service.CommandHandler;
+
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -56,20 +57,19 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
                     if (isAdmin(message)) {
                         commandHandler.handleCommand(message);
                     } else {
-                        commandHandler.handleButIgnoreNonAdminCommand(update.getMessage().getChatId());
+                        commandHandler.handleButIgnoreNonAdminCommand(chatId);
                         log.info("Non-admin user tried to send a command, chatId: {}", chatId);
                     }
-                // Публикация постов (возможна только из приватного чата)
-                } else {
-                    if (isPrivateChat(message)) {
-                        if (isAdmin(message)) {
-                            channelService.publishPostViaBot(message);
-                        } else {
-                            log.info("Non-admin user tried to publish a post, chatId: {}", chatId);
-                        }
+                // Публикация постов (только из приватного чата)
+                } else if (isPrivateChat(message)) {
+                    if (isAdmin(message)) {
+                        channelService.publishPostViaBot(message);
                     } else {
-                        log.info("Post publication attempt from non-private chat, chatId: {}", chatId);
+                        commandHandler.handleButIgnoreNonAdminCommand(chatId);
+                        log.info("Non-admin user tried to publish a post, chatId: {}", chatId);
                     }
+                } else {
+                    log.info("Post publication attempt from non-private chat, chatId: {}", chatId);
                 }
             }
         } catch (Exception e) {

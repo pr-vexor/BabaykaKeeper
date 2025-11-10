@@ -1,5 +1,7 @@
 package pr.vexor.telegrambot.babaykakeeper.service;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,9 +11,11 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageId;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
 
 import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
 import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
@@ -101,6 +105,24 @@ public class MessageSenderService {
         }
     }
 
+    /**
+     * Отправка альбома в канал
+     */
+    public List<Message> sendAlbumToChannel(String channelId, String mediaGroupId, List<InputMedia> mediaList, String discussionLink) throws TelegramApiException {
+        // Добавляем ссылку на закрытую группу к первому фото
+        if (!mediaList.isEmpty()) {
+            mediaList.get(0).setCaption(discussionLink);
+            mediaList.get(0).setParseMode("HTML");
+        }
+
+        SendMediaGroup sendMediaGroup = new SendMediaGroup();
+        sendMediaGroup.setChatId(channelId);
+        sendMediaGroup.setMedias(mediaList);
+
+        // Отправляем альбом
+        return bot.execute(sendMediaGroup);
+    }
+    
     /**
      * Создание ссылки на сообщение в чате
      */
