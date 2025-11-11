@@ -1,7 +1,5 @@
 package pr.vexor.telegrambot.babaykakeeper.service;
 
-import java.util.Collections;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +19,8 @@ import pr.vexor.telegrambot.babaykakeeper.bot.BabaykaTelegramBot;
 import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.utils.TextFields;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -28,47 +28,11 @@ public class MessageSenderService {
         
     private final BabaykaTelegramBot bot;
     private final TelegramProperties telegramProperties;
-  
-    /**
-     * Копирование сообщения в закрытую группу друзей
-     */
-    public Long copyMessageToFriendsGroup(String friendsGroupId, Message originalPost) throws TelegramApiException {
-        CopyMessage copyMessage = new CopyMessage();
-        copyMessage.setChatId(friendsGroupId);
-        copyMessage.setFromChatId(originalPost.getChatId().toString());
-        copyMessage.setMessageId(originalPost.getMessageId());
-
-        if (originalPost.getCaption() != null) {
-            copyMessage.setCaption(originalPost.getCaption());
-        }
-
-        MessageId messageId = bot.execute(copyMessage);
-        log.info("Message copied to friends group: {}", messageId.getMessageId());
-        return messageId.getMessageId();
-    }
-
-    /**
-     * Копирование одиночного сообщения в закрытую группу друзей
-     */
-    public Long copySingleMessageToFriendsGroup(String friendsGroupId, Message originalPost) throws TelegramApiException {
-        CopyMessage copyMessage = new CopyMessage();
-        copyMessage.setChatId(friendsGroupId);
-        copyMessage.setFromChatId(originalPost.getChatId().toString());
-        copyMessage.setMessageId(originalPost.getMessageId());
-
-        if (originalPost.getCaption() != null) {
-            copyMessage.setCaption(originalPost.getCaption());
-        }
-
-        MessageId messageId = bot.execute(copyMessage);
-        log.info("Single message copied to friends group: {}", messageId.getMessageId());
-        return messageId.getMessageId();
-    }
 
     /**
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
-    public Integer sendPostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
+    public Integer sendSingleMessagePostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
         String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
 
         if (original.hasText()) {
@@ -124,12 +88,15 @@ public class MessageSenderService {
     }
 
     /**
-     * Отправка альбома в канал
+     * Публикация альбома в канал с добавлением ссылки на приватное обсуждение
      */
     public List<Message> sendAlbumToChannel(String channelId, String mediaGroupId, List<InputMedia> mediaList, String discussionLink) throws TelegramApiException {
         // Добавляем ссылку на закрытую группу к первому фото
+        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
+        String captionWithLink = (mediaList.get(0).getCaption() != null ? mediaList.get(0).getCaption() : "") + linkHtml;
+        
         if (!mediaList.isEmpty()) {
-            mediaList.get(0).setCaption(discussionLink);
+            mediaList.get(0).setCaption(captionWithLink);
             mediaList.get(0).setParseMode("HTML");
         }
 
@@ -137,28 +104,44 @@ public class MessageSenderService {
         sendMediaGroup.setChatId(channelId);
         sendMediaGroup.setMedias(mediaList);
 
-        // Отправляем альбом
         return bot.execute(sendMediaGroup);
+    }
+    
+    /**
+     * Копирование одиночного сообщения в закрытую группу
+     */
+    public Long copySingleMessagePostToPrivateGroup(String privateGroupId, Message originalPost) throws TelegramApiException {
+        CopyMessage copyMessage = new CopyMessage();
+        copyMessage.setChatId(privateGroupId);
+        copyMessage.setFromChatId(originalPost.getChatId().toString());
+        copyMessage.setMessageId(originalPost.getMessageId());
+
+        // Подпись к альбомам
+        if (originalPost.getCaption() != null) {
+            copyMessage.setCaption(originalPost.getCaption());
+        }
+
+        MessageId messageId = bot.execute(copyMessage);
+        log.info("Single message copied to private group: {}", messageId.getMessageId());
+        return messageId.getMessageId();
     }
     
     /**
     * Отправка альбома в закрытую группу
     */
-   public List<Message> sendAlbumToPrivateGroup(String privateGroupId, List<InputMedia> mediaList) throws TelegramApiException {
-       // Добавляем ссылку на закрытую группу к первому фото
-       if (!mediaList.isEmpty()) {
-           String discussionLink = createMessageLink(privateGroupId, /* messageId будет заменено позже */ -1L);
-           mediaList.get(0).setCaption(discussionLink);
-           mediaList.get(0).setParseMode("HTML");
-       }
+    public List<Message> copyAlbumToPrivateGroup(String privateGroupId, List<InputMedia> mediaList, String caption) throws TelegramApiException {
+        // Добавляем подпись к первому фото
+        if (!mediaList.isEmpty() && caption != null) {
+            mediaList.get(0).setCaption(caption);
+            mediaList.get(0).setParseMode("HTML");
+        }
 
-       SendMediaGroup sendMediaGroup = new SendMediaGroup();
-       sendMediaGroup.setChatId(privateGroupId);
-       sendMediaGroup.setMedias(mediaList);
+        SendMediaGroup sendMediaGroup = new SendMediaGroup();
+        sendMediaGroup.setChatId(privateGroupId);
+        sendMediaGroup.setMedias(mediaList);
 
-       // Отправляем альбом
-       return bot.execute(sendMediaGroup);
-   }
+        return bot.execute(sendMediaGroup);
+    }
     
     /**
      * Создание ссылки на сообщение в чате

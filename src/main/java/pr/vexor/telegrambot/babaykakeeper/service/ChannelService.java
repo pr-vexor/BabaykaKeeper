@@ -34,6 +34,7 @@ public class ChannelService {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, Set<String>> mediaGroupUniqueIds = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> mediaGroupTimeouts = new ConcurrentHashMap<>();
+    private final Map<String, String> mediaGroupCaptions = new ConcurrentHashMap<>();
 
     private final MessageSenderService messageSender;
     private final ProcessedPostRepository postRepository;
@@ -61,14 +62,14 @@ public class ChannelService {
             } else {
                 // Обработка одиночного сообщения
                 String privateGroupId = telegramProperties.getPrivateGroup().getId();
-                Long privateMessageId = messageSender.copySingleMessageToFriendsGroup(privateGroupId, originalMessage);
+                Long privateMessageId = messageSender.copySingleMessagePostToPrivateGroup(privateGroupId, originalMessage);
                 log.info("Post copied to private group, privateMessageId: {}", privateMessageId);
 
                 // Создаем ссылку
                 String discussionLink = messageSender.createMessageLink(privateGroupId, privateMessageId);
 
                 // Отправляем одиночное сообщение в канал
-                Integer channelMessageId = messageSender.sendPostToChannel(channelId, originalMessage, discussionLink);
+                Integer channelMessageId = messageSender.sendSingleMessagePostToChannel(channelId, originalMessage, discussionLink);
 
                 Post post = new Post(channelMessageId, Long.valueOf(channelId), 
                                      applicationProperties.getName(), privateMessageId);
@@ -103,6 +104,11 @@ public class ChannelService {
         // Добавляем медиа в группу
         mediaGroups.computeIfAbsent(mediaGroupId, k -> new ArrayList<>()).add(inputMedia);
 
+        // Сохраняем подпись из первого сообщения альбома
+        if (!mediaGroupCaptions.containsKey(mediaGroupId) && message.getCaption() != null) {
+            mediaGroupCaptions.put(mediaGroupId, message.getCaption());
+        }
+
         // Отслеживаем уникальные file_unique_id
         mediaGroupUniqueIds.computeIfAbsent(mediaGroupId, k -> new HashSet<>()).add(fileUniqueId);
 
@@ -121,68 +127,41 @@ public class ChannelService {
     /**
     * Обработка завершенного альбома
     */
-   private void processAlbum(String mediaGroupId, String channelId) {
-       List<InputMedia> mediaList = mediaGroups.remove(mediaGroupId);
-       Set<String> uniqueIds = mediaGroupUniqueIds.remove(mediaGroupId);
-       mediaGroupTimeouts.remove(mediaGroupId);
+    private void processAlbum(String mediaGroupId, String channelId) {
+        List<InputMedia> mediaList = mediaGroups.remove(mediaGroupId);
+        String caption = mediaGroupCaptions.remove(mediaGroupId);
+        mediaGroupTimeouts.remove(mediaGroupId);
 
-       if (mediaList == null || mediaList.isEmpty()) {
-           log.warn("No media found for group ID: {}", mediaGroupId);
-           return;
-       }
-
-       try {
-           // Отправляем альбом в закрытую группу
-           List<Message> privateMessages = messageSender.sendAlbumToPrivateGroup(telegramProperties.getPrivateGroup().getId(), mediaList);
-           Integer tempMessageId = privateMessages.get(0).getMessageId(); // messageId первого сообщения
-           Long firstPrivateMessageId = Long.valueOf(tempMessageId); // Преобразуем в Long
-
-           // Создаем ссылку
-           String discussionLink = messageSender.createMessageLink(telegramProperties.getPrivateGroup().getId(), firstPrivateMessageId);
-
-           // Обновляем ссылку в альбоме для канала
-           if (!mediaList.isEmpty()) {
-               mediaList.get(0).setCaption(discussionLink);
-               mediaList.get(0).setParseMode("HTML");
-           }
-
-           // Отправляем альбом в канал
-           List<Message> channelMessages = messageSender.sendAlbumToChannel(channelId, mediaGroupId, mediaList, discussionLink);
-
-           // Сохраняем первый messageId из альбома
-           Integer channelMessageId = channelMessages.get(0).getMessageId();
-           Post post = new Post(channelMessageId, Long.valueOf(channelId), 
-                                applicationProperties.getName(), firstPrivateMessageId);
-           postRepository.save(post);
-
-           log.info("Album with {} photos sent successfully, channelMessageId: {}", mediaList.size(), channelMessageId);
-       } catch (TelegramApiException e) {
-           log.error("Error processing album: {}", e.getMessage(), e);
-       }
-   }
-
-    /**
-     * Проверка, является ли сообщение последним в альбоме
-     */
-    private boolean isLastPhotoInAlbum(Message message) {
-        // Упрощённая проверка: если количество медиа достигло предела (например, 10 фото)
-        return mediaGroups.get(message.getMediaGroupId()).size() >= 10;
-    }
-
-    /**
-     * Сбор медиа-файлов из альбома
-     */
-    private List<InputMedia> collectMediaFromAlbum(Message message) {
-        List<InputMedia> mediaList = new ArrayList<>();
-        if (message.hasPhoto()) {
-            List<PhotoSize> photos = message.getPhoto();
-            PhotoSize largestPhoto = photos.get(photos.size() - 1); // Берём самое большое изображение
-
-            InputMedia inputMedia = new InputMediaPhoto();
-            inputMedia.setMedia(largestPhoto.getFileId());
-            mediaList.add(inputMedia);
+        if (mediaList == null || mediaList.isEmpty()) {
+            log.warn("No media found for group ID: {}", mediaGroupId);
+            return;
         }
-        // TODO: Добавить поддержку других типов медиа (например, видео)
-        return mediaList;
+
+        try {
+            String privateGroupId = telegramProperties.getPrivateGroup().getId();
+
+            // Отправляем альбом в закрытую группу
+            List<Message> privateMessages = messageSender.copyAlbumToPrivateGroup(privateGroupId, mediaList, caption);
+
+            // Обновляем подпись для первого медиа-файла
+            if (!mediaList.isEmpty()) {
+                mediaList.get(0).setCaption(caption);
+                mediaList.get(0).setParseMode("HTML");
+            }
+            
+            Long firstPrivateMessageId = Long.valueOf(privateMessages.get(0).getMessageId()); // messageId первого сообщения
+            String discussionLink = messageSender.createMessageLink(privateGroupId, firstPrivateMessageId);
+            
+            // Отправляем альбом в канал
+            List<Message> channelMessages = messageSender.sendAlbumToChannel(channelId, mediaGroupId, mediaList, discussionLink);
+
+            Integer channelMessageId = channelMessages.get(0).getMessageId();
+            Post post = new Post(channelMessageId, Long.valueOf(channelId), applicationProperties.getName(), firstPrivateMessageId);
+            postRepository.save(post);
+
+            log.info("Album with {} photos sent successfully, channelMessageId: {}", mediaList.size(), channelMessageId);
+        } catch (TelegramApiException e) {
+            log.error("Error processing album: {}", e.getMessage(), e);
+        }
     }
 }

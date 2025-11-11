@@ -39,6 +39,7 @@ public class BabaykaTelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         log.info("Update was found, updateId: {}", update.getUpdateId());
 
+        // Игнорирование команд и сообщений в стандбай режиме
         if (!activityManager.isActive() && !isActivateOrStartCommand(update)) {
             if (update.hasMessage() && update.getMessage().hasText()) {
                 commandHandler.handleButIgnoreCommand(update.getMessage().getChatId());
