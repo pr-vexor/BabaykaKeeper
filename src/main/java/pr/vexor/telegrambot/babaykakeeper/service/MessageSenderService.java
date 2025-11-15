@@ -20,6 +20,8 @@ import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
 import pr.vexor.telegrambot.babaykakeeper.utils.TextFields;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -166,5 +168,27 @@ public class MessageSenderService {
         } catch (TelegramApiException e) {
             log.error("Message send error: {}", e.getMessage());
         }
+    }
+    
+    private String addLinkTagAfterOtherTags(String text, String discussionLink) {
+        if (text == null || text.isEmpty()) {
+            log.error("Text is empty or null");
+            return text;
+        }
+        
+        String lineSeparator = "";
+        
+        String regex = "(.+\\n\\n)(#\\w+(\\s+#\\w+)*)$";
+        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL); // для многострочности
+        Matcher matcher = pattern.matcher(text.trim());
+        if (matcher.matches()) {
+            lineSeparator += "\n\n";
+        }
+        
+        // Добавляем ссылку на закрытую группу к первому фото
+        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
+        text = text + lineSeparator + linkHtml;
+        
+        return text;
     }
 }
