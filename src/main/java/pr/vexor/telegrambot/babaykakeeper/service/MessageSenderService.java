@@ -35,10 +35,8 @@ public class MessageSenderService {
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public Integer sendSingleMessagePostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
-        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
-
         if (original.hasText()) {
-            String fullText = original.getText() + linkHtml;
+            String fullText = addLinkTagAfterOtherTags(original.getText(), discussionLink);
             SendMessage message = new SendMessage();
             message.setChatId(channelId);
             message.setText(fullText);
@@ -48,8 +46,8 @@ public class MessageSenderService {
         } else if (original.hasPhoto()) {
             var photos = original.getPhoto();
             String fileId = photos.get(photos.size() - 1).getFileId();
-            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
-
+            String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
+            
             SendPhoto sendPhoto = new SendPhoto();
             sendPhoto.setChatId(channelId);
             sendPhoto.setPhoto(new InputFile(fileId));
@@ -59,7 +57,7 @@ public class MessageSenderService {
             return sentMessage.getMessageId();
         } else if (original.hasVideo()) {
             String fileId = original.getVideo().getFileId();
-            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
+            String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
 
             SendVideo sendVideo = new SendVideo();
             sendVideo.setChatId(channelId);
@@ -70,7 +68,7 @@ public class MessageSenderService {
             return sentMessage.getMessageId();
         } else if (original.getDocument() != null) {
             String fileId = original.getDocument().getFileId();
-            String caption = (original.getCaption() != null ? original.getCaption() : "") + linkHtml;
+            String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
 
             SendDocument sendDoc = new SendDocument();
             sendDoc.setChatId(channelId);
@@ -80,9 +78,10 @@ public class MessageSenderService {
             Message sentMessage = bot.execute(sendDoc);
             return sentMessage.getMessageId();
         } else {
+            String fullText = addLinkTagAfterOtherTags("Новое сообщение", discussionLink);
             SendMessage msg = new SendMessage();
             msg.setChatId(channelId);
-            msg.setText("Новое сообщение\n\n" + linkHtml);
+            msg.setText(fullText);
             msg.setParseMode("HTML");
             Message sentMessage = bot.execute(msg);
             return sentMessage.getMessageId();
@@ -171,18 +170,20 @@ public class MessageSenderService {
     }
     
     private String addLinkTagAfterOtherTags(String text, String discussionLink) {
+        String lineSeparator = "\n\n";
+
+        // если текста нет совсем, сразу вставляем теги
         if (text == null || text.isEmpty()) {
             log.error("Text is empty or null");
-            return text;
-        }
-        
-        String lineSeparator = "";
-        
-        String regex = "(.+\\n\\n)(#\\w+(\\s+#\\w+)*)$";
-        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL); // для многострочности
-        Matcher matcher = pattern.matcher(text.trim());
-        if (matcher.matches()) {
-            lineSeparator += "\n\n";
+            text = "";
+        // если уже есть сепарированные от текста теги в конце,
+        } else {
+            String regex = "(.+\\n\\n)(#\\w+(\\s+#\\w+)*)$";
+            Pattern pattern = Pattern.compile(regex, Pattern.DOTALL); // для многострочности
+            Matcher matcher = pattern.matcher(text.trim());
+            if (matcher.matches()) {
+                lineSeparator = " ";
+            }
         }
         
         // Добавляем ссылку на закрытую группу к первому фото

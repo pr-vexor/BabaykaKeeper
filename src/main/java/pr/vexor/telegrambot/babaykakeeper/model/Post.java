@@ -22,9 +22,6 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime processedAt;
     
-    @Column(nullable = false)
-    private boolean hasButton = false;
-    
     private Long privateGroupMessageId;
     
     public Post(Integer messageId, Long channelChatId, String instanceName, Long friendsGroupMessageId) {
@@ -32,7 +29,6 @@ public class Post {
         this.channelChatId = channelChatId;
         this.processedBy = instanceName;
         this.processedAt = LocalDateTime.now();
-        this.hasButton = true;
         this.privateGroupMessageId = friendsGroupMessageId;
     }
 }
