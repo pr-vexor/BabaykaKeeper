@@ -8,10 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageId;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
-import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
 
@@ -76,6 +73,17 @@ public class MessageSenderService {
             sendDoc.setCaption(caption);
             sendDoc.setParseMode("HTML");
             Message sentMessage = bot.execute(sendDoc);
+            return sentMessage.getMessageId();
+        } else if (original.hasVoice()) {
+            String fileId = original.getVoice().getFileId();
+            String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
+
+            SendVoice sendVoice = new SendVoice();
+            sendVoice.setChatId(channelId);
+            sendVoice.setVoice(new InputFile(fileId));
+            sendVoice.setCaption(caption);
+            sendVoice.setParseMode("HTML");
+            Message sentMessage = bot.execute(sendVoice);
             return sentMessage.getMessageId();
         } else {
             String fullText = addLinkTagAfterOtherTags("Новое сообщение", discussionLink);
