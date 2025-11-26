@@ -8,6 +8,8 @@ import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaVideo;
+import org.telegram.telegrambots.meta.api.objects.Video;
 
 import pr.vexor.telegrambot.babaykakeeper.config.ApplicationProperties;
 import pr.vexor.telegrambot.babaykakeeper.config.TelegramProperties;
@@ -91,15 +93,27 @@ public class ChannelService {
             log.warn("Message is not part of an album, chatId: {}", message.getChatId());
             return;
         }
-
-        // Извлекаем file_unique_id самого большого изображения
-        List<PhotoSize> photos = message.getPhoto();
-        PhotoSize largestPhoto = photos.get(photos.size() - 1); // Берём самое большое изображение
-        String fileUniqueId = largestPhoto.getFileUniqueId();
-
+        
         // Создаем InputMedia для отправки
-        InputMedia inputMedia = new InputMediaPhoto();
-        inputMedia.setMedia(largestPhoto.getFileId());
+        InputMedia inputMedia;
+        String fileUniqueId;
+        if (message.hasPhoto()) {
+            List<PhotoSize> photos = message.getPhoto();
+            PhotoSize largestPhoto = photos.get(photos.size() - 1);
+            fileUniqueId = largestPhoto.getFileUniqueId(); // Берём самое большое изображение
+            
+            inputMedia = new InputMediaPhoto();
+            inputMedia.setMedia(largestPhoto.getFileId());
+        } else if (message.hasVideo()) {
+            Video video = message.getVideo();
+            fileUniqueId = video.getFileUniqueId();
+
+            inputMedia = new InputMediaVideo();
+            inputMedia.setMedia(video.getFileId());
+        } else {
+            log.warn("Unsupported media type in album, mediaGroupId: {}", mediaGroupId);
+            return;
+        }
 
         // Добавляем медиа в группу
         mediaGroups.computeIfAbsent(mediaGroupId, k -> new ArrayList<>()).add(inputMedia);
@@ -159,7 +173,7 @@ public class ChannelService {
             Post post = new Post(channelMessageId, Long.valueOf(channelId), applicationProperties.getName(), firstPrivateMessageId);
             postRepository.save(post);
 
-            log.info("Album with {} photos sent successfully, channelMessageId: {}", mediaList.size(), channelMessageId);
+            log.info("Album with {} photos/videos was sent successfully, channelMessageId: {}", mediaList.size(), channelMessageId);
         } catch (TelegramApiException e) {
             log.error("Error processing album: {}", e.getMessage(), e);
         }
