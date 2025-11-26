@@ -32,6 +32,7 @@ public class MessageSenderService {
      * Публикация поста в канал с добавлением ссылки на приватное обсуждение
      */
     public Integer sendSingleMessagePostToChannel(String channelId, Message original, String discussionLink) throws TelegramApiException {
+        // Просто текстовые посты
         if (original.hasText()) {
             String fullText = addLinkTagAfterOtherTags(original.getText(), discussionLink);
             SendMessage message = new SendMessage();
@@ -40,6 +41,7 @@ public class MessageSenderService {
             message.setParseMode("HTML");
             Message sentMessage = bot.execute(message);
             return sentMessage.getMessageId();
+        // Фото
         } else if (original.hasPhoto()) {
             var photos = original.getPhoto();
             String fileId = photos.get(photos.size() - 1).getFileId();
@@ -52,6 +54,7 @@ public class MessageSenderService {
             sendPhoto.setParseMode("HTML");
             Message sentMessage = bot.execute(sendPhoto);
             return sentMessage.getMessageId();
+        // Видео (не кружками)
         } else if (original.hasVideo()) {
             String fileId = original.getVideo().getFileId();
             String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
@@ -63,6 +66,7 @@ public class MessageSenderService {
             sendVideo.setParseMode("HTML");
             Message sentMessage = bot.execute(sendVideo);
             return sentMessage.getMessageId();
+        // Доки
         } else if (original.getDocument() != null) {
             String fileId = original.getDocument().getFileId();
             String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
@@ -74,6 +78,7 @@ public class MessageSenderService {
             sendDoc.setParseMode("HTML");
             Message sentMessage = bot.execute(sendDoc);
             return sentMessage.getMessageId();
+        // Голосовые 
         } else if (original.hasVoice()) {
             String fileId = original.getVoice().getFileId();
             String caption = addLinkTagAfterOtherTags(original.getCaption(), discussionLink);
@@ -85,6 +90,17 @@ public class MessageSenderService {
             sendVoice.setParseMode("HTML");
             Message sentMessage = bot.execute(sendVoice);
             return sentMessage.getMessageId();
+        // Кружочки ( без ссылки )
+        } else if (original.hasVideoNote()) {
+            String fileId = original.getVideoNote().getFileId();
+
+            SendVideoNote sendVideoNote = new SendVideoNote();
+            sendVideoNote.setChatId(channelId);
+            sendVideoNote.setVideoNote(new InputFile(fileId));
+
+            Message sentMessage = bot.execute(sendVideoNote);
+            return sentMessage.getMessageId();
+        // Всё остальное (если осталось)
         } else {
             String fullText = addLinkTagAfterOtherTags("Новое сообщение", discussionLink);
             SendMessage msg = new SendMessage();
