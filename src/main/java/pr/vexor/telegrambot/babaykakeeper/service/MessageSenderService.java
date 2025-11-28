@@ -117,8 +117,8 @@ public class MessageSenderService {
      */
     public List<Message> sendAlbumToChannel(String channelId, String mediaGroupId, List<InputMedia> mediaList, String discussionLink) throws TelegramApiException {
         // Добавляем ссылку на закрытую группу к первому фото
-        String linkHtml = String.format(TextFields.BUTTON_LINK_HTML_FORMAT, discussionLink, telegramProperties.getPrivateGroup().getText());
-        String captionWithLink = (mediaList.get(0).getCaption() != null ? mediaList.get(0).getCaption() : "") + linkHtml;
+        String caption = mediaList.get(0).getCaption() != null ? mediaList.get(0).getCaption() : "";
+        String captionWithLink = addLinkTagAfterOtherTags(caption, discussionLink);
         
         if (!mediaList.isEmpty()) {
             mediaList.get(0).setCaption(captionWithLink);
